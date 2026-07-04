@@ -1,0 +1,138 @@
+:root {
+	/* Blue-tinted dark theme */
+	--bg: #08090c;
+	--bg-raised: #0c0e13;
+	--bg-titlebar: #0a0c10;
+	--dot: rgba(96, 140, 200, 0.16);
+	--border-subtle: rgba(120, 160, 220, 0.12);
+	--accent: #4f8fe6;
+	--accent-soft: rgba(79, 143, 230, 0.35);
+	--text: #d7e0ee;
+	--text-dim: #7c8aa0;
+	--titlebar-height: 44px;
+
+	color-scheme: dark;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	min-height: 100vh;
+}
+
+body {
+	background-color: var(--bg);
+	/* Subtle dotted grid */
+	background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+	background-size: 26px 26px;
+	color: var(--text);
+	font-family:
+		'Segoe UI',
+		system-ui,
+		-apple-system,
+		sans-serif;
+	font-size: 15px;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* ---- Shared form styles (config builder) ---- */
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	margin-bottom: 0.8rem;
+	font-size: 0.85rem;
+}
+
+.field > span {
+	color: var(--text-dim);
+}
+
+.field input,
+.field select,
+.field textarea {
+	background: var(--bg);
+	border: 1px solid var(--border-subtle);
+	color: var(--text);
+	border-radius: 6px;
+	padding: 0.45rem 0.6rem;
+	font: inherit;
+	font-size: 0.85rem;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+	outline: 1px solid var(--accent-soft);
+}
+
+.field textarea {
+	resize: vertical;
+}
+
+.check {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.6rem;
+	font-size: 0.85rem;
+	color: var(--text-dim);
+}
+
+.check input {
+	accent-color: var(--accent);
+}
+
+button.danger {
+	background: transparent;
+	border: 1px solid rgba(224, 120, 120, 0.4);
+	color: #e07878;
+	border-radius: 6px;
+	padding: 0.35rem 0.7rem;
+	font: inherit;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+button.danger:hover {
+	background: rgba(224, 120, 120, 0.1);
+}
+
+.accent-btn {
+	background: #86b3f0;
+	color: var(--bg-titlebar);
+	font-weight: 600;
+	font-size: 0.9rem;
+	border: none;
+	border-radius: 8px;
+	padding: 0.6rem 1.1rem;
+	cursor: pointer;
+}
+
+.accent-btn:hover {
+	filter: brightness(1.1);
+}
+
+/* Themed secondary button (modals, editors) */
+.btn {
+	background: transparent;
+	border: 1px solid var(--accent-soft);
+	color: var(--accent);
+	border-radius: 6px;
+	padding: 0.45rem 0.8rem;
+	font: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.btn:hover {
+	background: rgba(79, 143, 230, 0.12);
+	color: var(--text);
+}
