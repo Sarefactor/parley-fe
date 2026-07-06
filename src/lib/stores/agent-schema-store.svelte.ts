@@ -18,6 +18,7 @@ import type { TransitionDto } from '$parleyts/transition-dto';
 import type { ValidationRuleDto } from '$parleyts/validation-rule-dto';
 import { VariableDataType } from '$parleyts/variable-data-type';
 import type { WorkflowErrorType } from '$parleyts/workflow-error-type';
+import type { WorkflowSchemaDto } from '$parleyts/workflow-schema-dto';
 import type { WorkflowVariableDto } from '$parleyts/workflow-variable-dto';
 
 // Re-export the generated node option types for components.
@@ -387,6 +388,50 @@ class AgentSchemaStore {
 		this.modal = null;
 		this.validation = null;
 		this.markClean();
+	}
+
+	/** Clears the store ready for building a brand-new standalone workflow. */
+	resetForWorkflow(): void {
+		this.reset();
+		this.createWorkflow();
+		this.markClean();
+	}
+
+	/** Hydrates the store with a single standalone workflow (e.g. fetched from the API). */
+	loadFromWorkflowDto(dto: WorkflowSchemaDto): void {
+		this.agentId = newUuid();
+		this.agentName = '';
+		this.agentInstructions = '';
+		this.workflows = [
+			{
+				name: dto.name ?? '',
+				intent: dto.intent ?? '',
+				description: dto.description ?? '',
+				executionNodeId: dto.executionNodeId,
+				workflowVariables: dto.workflowVariables ?? [],
+				nodes: Object.fromEntries(
+					(dto.nodes ?? []).map((node) => [node.nodeId, normalizeNode(node)])
+				)
+			}
+		];
+		this.currentIndex = 0;
+		this.modal = null;
+		this.validation = null;
+		this.markClean();
+	}
+
+	/** Builds the WorkflowSchemaDto for the current workflow (standalone workflow save). */
+	toWorkflowSchemaDto(): WorkflowSchemaDto {
+		const workflow = this.workflow;
+		if (!workflow) throw new Error('No workflow to serialize.');
+		return {
+			name: workflow.name,
+			intent: workflow.intent,
+			description: workflow.description,
+			executionNodeId: workflow.executionNodeId,
+			workflowVariables: workflow.workflowVariables,
+			nodes: Object.values(workflow.nodes)
+		};
 	}
 
 	/** Hydrates the store from an existing AgentSchemaDto (e.g. fetched from the API). */

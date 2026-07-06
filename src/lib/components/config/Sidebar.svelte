@@ -2,6 +2,8 @@
 	import { defaultPaletteNodes } from '$lib/config-builder/node-types';
 	import { schema } from '$lib/stores/agent-schema-store.svelte';
 
+	let { showAgentOptions = true }: { showAgentOptions?: boolean } = $props();
+
 	let collapsed = $state(false);
 	let filter = $state('');
 	let groupOpen = $state(true);
@@ -19,14 +21,16 @@
 </script>
 
 <aside class:collapsed>
-	<button
-		type="button"
-		class="schema-options"
-		class:error-border={schema.agentErrors.length > 0}
-		onclick={() => schema.openAgentOptions()}
-	>
-		Agent Schema Options
-	</button>
+	{#if showAgentOptions}
+		<button
+			type="button"
+			class="schema-options"
+			class:error-border={schema.agentErrors.length > 0}
+			onclick={() => schema.openAgentOptions()}
+		>
+			Agent Schema Options
+		</button>
+	{/if}
 	<input class="filter" placeholder="Filter nodes..." bind:value={filter} />
 	<button type="button" class="group-header" onclick={() => (groupOpen = !groupOpen)}>
 		<span class="chevron" class:open={groupOpen}>▸</span>

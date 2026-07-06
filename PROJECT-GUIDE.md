@@ -31,8 +31,9 @@ src/
   lib/
     config.ts                    API base url (VITE_API_BASE_URL override) + endpoint builders.
     api/parley-api.ts            Fetch wrappers: searchAgentSchemas, getAgentSchema,
-                                 upsertAgentSchema (throws UpsertValidationError on 422),
-                                 setActiveSchema.
+                                 upsertAgentSchema, setActiveSchema, searchWorkflowSchemas,
+                                 getWorkflowSchema, upsertWorkflowSchema (both upserts throw
+                                 UpsertValidationError on 422).
     config-builder/
       ids.ts                     newUuid() (crypto.randomUUID).
       node-types.ts              NodeType map + defaultPaletteNodes (sidebar palette).
@@ -40,7 +41,10 @@ src/
     stores/
       agent-schema-store.svelte.ts   THE central runes store (singleton `schema`). See §4.
     components/config/
-      Sidebar.svelte             Collapsible palette + Agent Schema Options button.
+      Sidebar.svelte             Collapsible palette + Agent Schema Options button
+                                 (hidden via showAgentOptions={false} in workflow mode).
+      BuilderPage.svelte         The whole builder page (toolbar, canvas, modals), shared by
+                                 /agents/config and /workflows/config via a mode prop. See §2a.
       WorkflowCanvas.svelte      Svelte Flow wrapper: nodeTypes map, edge<->DTO sync, DnD.
       Modal.svelte               Generic modal. Props: title, onclose, wide, tall,
                                  errors (read-only red panel rendered beside the modal).
@@ -52,9 +56,26 @@ src/
       RuleFields.svelte          Comparison-type + match inputs for validation/transition rules.
       nodes/                     One canvas component per node type + BaseNode.svelte.
   routes/
-    +page.svelte                 Landing page: paged agent-schema table, row click -> /config?id=…
-    config/+page.svelte          The builder page (ssr=false in +page.ts): toolbar, canvas, modals.
+    +page.svelte                 Landing page: Agent/Workflow Schemas toggle + paged search table.
+                                 Row click / Create + -> /agents/config?id=… or /workflows/config?id=…
+                                 depending on the toggle; ?tab=workflows restores the toggle.
+    agents/config/+page.svelte   <BuilderPage mode="agent" /> (ssr=false in +page.ts).
+    workflows/config/+page.svelte <BuilderPage mode="workflow" /> (ssr=false in +page.ts).
+    config/+page.ts              Legacy route: 308 redirect to /agents/config (query preserved).
 ```
+
+### 2a. Builder modes (`BuilderPage.svelte`)
+
+One builder component, `mode: 'agent' | 'workflow'`:
+- **agent** — edits a whole AgentSchemaDto (all workflows). Loads via `getAgentSchema`,
+  saves via `upsertAgentSchema`. Full toolbar.
+- **workflow** — edits a single standalone WorkflowSchemaDto. Loads via
+  `getWorkflowSchema(id)` (id = the search item's id), saves the current draft via
+  `upsertWorkflowSchema(schema.toWorkflowSchemaDto())`. Hidden: sidebar Agent Schema
+  Options, Add Workflow, Set Active Schema, and the workflow dropdown. The list button is
+  titled "Workflow Schemas" and goes back to `/?tab=workflows`. New (`no ?id`) uses
+  `schema.resetForWorkflow()` (reset + one pre-created workflow). 422 validation flow is
+  identical — workflow errors still key off `workflowId = executionNodeId`.
 
 ## 3. Data model (server truth)
 
@@ -78,10 +99,14 @@ All comparison enums now include `HasValue` / `HasNoValue` (match inputs hidden 
 stale values are deliberately kept, not cleared).
 
 ### API endpoints (src/lib/config.ts)
-- `GET  /api/parley/search?skip&take` → `SearchResultDto<AgentSchemaSearchItemDto>` (page is 0-based here)
-- `GET  /api/parley/get?agentSchemaId=<uuid>` → `AgentSchemaDto`
-- `POST /api/parley/upsert` (body: AgentSchemaDto) → 200, or **422 + `ParleyValidationContextDto`**
-- `POST /api/parley/setActiveSchema?agentSchemaId=<uuid>`
+- `GET  /api/parley/agentschemas/search?skip&take` → `SearchResultDto<AgentSchemaSearchItemDto>` (page is 0-based here)
+- `GET  /api/parley/agentschemas/get?agentSchemaId=<uuid>` → `AgentSchemaDto`
+- `POST /api/parley/agentschemas/upsert` (body: AgentSchemaDto) → 200, or **422 + `ParleyValidationContextDto`**
+- `POST /api/parley/agentschemas/setActiveSchema?agentSchemaId=<uuid>`
+- `GET  /api/parley/workflowschemas/search?skip&take` → same `SearchResultDto<AgentSchemaSearchItemDto>`
+  shape; item ids are workflow execution-node ids
+- `GET  /api/parley/workflowschemas/get?workflowSchemaId=<uuid>` → `WorkflowSchemaDto`
+- `POST /api/parley/workflowschemas/upsert` (body: WorkflowSchemaDto) → 200, or **422 + `ParleyValidationContextDto`**
 
 ## 4. The store — `agent-schema-store.svelte.ts`
 
@@ -101,6 +126,8 @@ Key methods:
 - **`getAllVariables()`** — workflow variables + every node's `nodeVariables`, one list. All variable
   pickers/autocompletes feed from this.
 - `toAgentSchemaDto()` / `loadFromDto(dto)` (normalises nodes via `normalizeNode`) / `reset()`.
+- Standalone-workflow mode: `loadFromWorkflowDto(dto)`, `toWorkflowSchemaDto()` (current draft),
+  `resetForWorkflow()` (reset + one blank workflow) — used by `/workflows/config`.
 - Dirty tracking: `markClean()` + `get isDirty` (JSON snapshot diff) — used by the back-button
   "Unsaved Changes" confirm.
 - Validation (see §8): `setValidation`, `agentErrors`, `hasWorkflowErrors`,
@@ -263,7 +290,8 @@ nodeTypes registration, modal branch.
   appear automatically; labels are PascalCase split ("GreaterThanOrEqualTo" → "Greater Than Or
   Equal To").
 - Search paging on the landing page assumes the API's `page` is **0-based** (skip = page × pageSize).
-- The store is a module singleton: /config always `reset()`s (no `?id`) or `loadFromDto`s on mount.
+- The store is a module singleton: the builder always `reset()`s / `resetForWorkflow()`s (no `?id`)
+  or `loadFromDto`s / `loadFromWorkflowDto`s on mount.
 - Save button posts the whole AgentSchemaDto (all workflows). "Set Active Schema" posts
   `?agentSchemaId=` — the search endpoint's param naming was assumed consistent; adjust in
   `config.ts` if the backend differs.

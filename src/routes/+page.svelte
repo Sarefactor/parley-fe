@@ -1,16 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
+	import { page as appPage } from '$app/state';
 	import type { AgentSchemaSearchItemDto } from '$parleyts/agent-schema-search-item-dto';
-	import { searchAgentSchemas } from '$lib/api/parley-api';
+	import { searchAgentSchemas, searchWorkflowSchemas } from '$lib/api/parley-api';
 	import { config } from '$lib/config';
 
+	type SchemaTab = 'agents' | 'workflows';
+
+	let tab = $state<SchemaTab>('agents');
 	let items = $state<AgentSchemaSearchItemDto[]>([]);
 	let totalResults = $state(0);
 	let pageSize = $state<number>(config.search.defaultPageSize);
 	let page = $state(0); // 0-based: skip = page * pageSize
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+
+	const heading = $derived(tab === 'agents' ? 'Agent Schemas' : 'Workflow Schemas');
+	const configPath = $derived(tab === 'agents' ? '/agents/config' : '/workflows/config');
 
 	const totalPages = $derived(Math.max(1, Math.ceil(totalResults / pageSize)));
 	const rangeStart = $derived(totalResults === 0 ? 0 : page * pageSize + 1);
@@ -29,16 +36,28 @@
 		loading = true;
 		error = null;
 		try {
-			const result = await searchAgentSchemas(page * pageSize, pageSize);
+			const search = tab === 'agents' ? searchAgentSchemas : searchWorkflowSchemas;
+			const result = await search(page * pageSize, pageSize);
 			items = result.results;
 			totalResults = result.totalResults;
 			pageSize = result.pageSize;
 			page = result.page;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load agent schemas.';
+			error = e instanceof Error ? e.message : `Failed to load ${heading.toLowerCase()}.`;
 		} finally {
 			loading = false;
 		}
+	}
+
+	function selectTab(target: SchemaTab): void {
+		if (target === tab) return;
+		tab = target;
+		page = 0;
+		items = [];
+		totalResults = 0;
+		// Keep the toggle restorable (e.g. the builder's back button links to /?tab=workflows).
+		replaceState(target === 'workflows' ? '/?tab=workflows' : '/', {});
+		void load();
 	}
 
 	function goToPage(target: number): void {
@@ -48,11 +67,12 @@
 	}
 
 	onMount(() => {
+		if (appPage.url.searchParams.get('tab') === 'workflows') tab = 'workflows';
 		void load();
 	});
 
 	function openSchema(id: string): void {
-		void goto(`/config?id=${encodeURIComponent(id)}`);
+		void goto(`${configPath}?id=${encodeURIComponent(id)}`);
 	}
 
 	function formatDate(value: Date | string): string {
@@ -64,13 +84,34 @@
 </script>
 
 <svelte:head>
-	<title>Parley — Agent Schemas</title>
+	<title>Parley — {heading}</title>
 </svelte:head>
 
 <section class="panel">
+	<div class="tab-toggle" role="tablist" aria-label="Schema type">
+		<button
+			type="button"
+			role="tab"
+			aria-selected={tab === 'agents'}
+			class:active={tab === 'agents'}
+			onclick={() => selectTab('agents')}
+		>
+			Agent Schemas
+		</button>
+		<button
+			type="button"
+			role="tab"
+			aria-selected={tab === 'workflows'}
+			class:active={tab === 'workflows'}
+			onclick={() => selectTab('workflows')}
+		>
+			Workflow Schemas
+		</button>
+	</div>
+
 	<div class="panel-header">
-		<h1>Agent Schemas</h1>
-		<a class="create-btn" href="/config">Create +</a>
+		<h1>{heading}</h1>
+		<a class="create-btn" href={configPath}>Create +</a>
 	</div>
 
 	{#if loading}
@@ -81,7 +122,7 @@
 			<button onclick={() => void load()}>Retry</button>
 		</div>
 	{:else if items.length === 0}
-		<p class="status">No agent schemas found.</p>
+		<p class="status">No {heading.toLowerCase()} found.</p>
 	{:else}
 		<table>
 			<thead>
@@ -153,6 +194,39 @@
 		border: 1px solid var(--border-subtle);
 		border-radius: 8px;
 		padding: 1.25rem 1.5rem;
+	}
+
+	.tab-toggle {
+		display: flex;
+		width: fit-content;
+		background: var(--bg-titlebar);
+		border: 1px solid var(--border-subtle);
+		border-radius: 8px;
+		padding: 0.25rem;
+		gap: 0.25rem;
+		margin: 0 auto calc(1rem + 20px);
+	}
+
+	.tab-toggle button {
+		min-width: unset;
+		border: 1px solid transparent;
+		color: var(--text-dim);
+		border-radius: 6px;
+		padding: 0.4rem 0.9rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+
+	.tab-toggle button:hover:not(.active) {
+		color: var(--text);
+		background: rgba(79, 143, 230, 0.08);
+	}
+
+	.tab-toggle button.active {
+		background: rgba(79, 143, 230, 0.2);
+		border-color: var(--accent);
+		color: var(--text);
+		cursor: default;
 	}
 
 	.panel-header {
