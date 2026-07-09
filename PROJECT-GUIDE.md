@@ -289,7 +289,9 @@ nodeTypes registration, modal branch.
 - Enum dropdowns are generated from the enum objects (`enum-options.ts`), so new enum members
   appear automatically; labels are PascalCase split ("GreaterThanOrEqualTo" → "Greater Than Or
   Equal To").
-- Search paging on the landing page assumes the API's `page` is **0-based** (skip = page × pageSize).
+- Search paging: the landing page's local `page` is **0-based** (skip = page × pageSize) but the
+  API's response `page` is **1-based** — `load()` converts with `result.page - 1`. Page size is
+  user-selectable (dropdown next to the pager, options in `config.search.pageSizeOptions`).
 - The store is a module singleton: the builder always `reset()`s / `resetForWorkflow()`s (no `?id`)
   or `loadFromDto`s / `loadFromWorkflowDto`s on mount.
 - Save button posts the whole AgentSchemaDto (all workflows). "Set Active Schema" posts

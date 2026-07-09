@@ -12,6 +12,7 @@
 	import {
 		emptyValidationRule,
 		schema,
+		type CatFactsNodeOptions,
 		type ChoiceNodeOptions,
 		type ClassificationNodeOptions,
 		type ConfirmationNodeOptions,
@@ -43,7 +44,8 @@
 		NodeType.Input,
 		NodeType.Confirmation,
 		NodeType.Choice,
-		NodeType.Generation
+		NodeType.Generation,
+		NodeType.CatFacts
 	];
 
 	$effect(() => {
@@ -52,7 +54,8 @@
 			| InputNodeOptions
 			| ConfirmationNodeOptions
 			| ChoiceNodeOptions
-			| GenerationNodeOptions;
+			| GenerationNodeOptions
+			| CatFactsNodeOptions;
 		const name = config.nodeVariables[0]?.name ?? '';
 		if (options.targetKey !== name) options.targetKey = name;
 	});
@@ -156,6 +159,8 @@
 				return 'Generation Node';
 			case NodeType.Transition:
 				return 'Transition Node';
+			case NodeType.CatFacts:
+				return 'Cat Facts Node';
 			default:
 				return 'Node';
 		}
@@ -489,6 +494,23 @@
 				<span>Prompt</span>
 				<MessageField bind:value={options.message} variables={allVariables} />
 			</div>
+			{#if config.nodeVariables[0]}
+				<h3>Variable</h3>
+				<label class="field">
+					<span>Name</span>
+					<input bind:value={config.nodeVariables[0].name} />
+				</label>
+				<label class="field">
+					<span>Description</span>
+					<input bind:value={config.nodeVariables[0].description} />
+				</label>
+			{/if}
+		{:else if config.nodeType === NodeType.CatFacts}
+			{@const options = config.nodeOptions as CatFactsNodeOptions}
+			<label class="field">
+				<span>Max Length</span>
+				<input type="number" min="1" bind:value={options.maxLength} />
+			</label>
 			{#if config.nodeVariables[0]}
 				<h3>Variable</h3>
 				<label class="field">

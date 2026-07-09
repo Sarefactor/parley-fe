@@ -16,7 +16,8 @@ export const config = {
 	},
 
 	search: {
-		defaultPageSize: 8
+		defaultPageSize: 10,
+		pageSizeOptions: [10, 15, 20, 25]
 	}
 } as const;
 

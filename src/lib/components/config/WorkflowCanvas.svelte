@@ -12,6 +12,7 @@
 	import { NodeType, type NodeTypeId } from '$lib/config-builder/node-types';
 	import { schema } from '$lib/stores/agent-schema-store.svelte';
 	import type { NodeConfigDto } from '$parleyts/node-config-dto';
+	import CatFactsNode from './nodes/CatFactsNode.svelte';
 	import ChoiceNode from './nodes/ChoiceNode.svelte';
 	import ClassificationNode from './nodes/ClassificationNode.svelte';
 	import CompletionNode from './nodes/CompletionNode.svelte';
@@ -33,7 +34,8 @@
 		[NodeType.Classification]: ClassificationNode,
 		[NodeType.HttpRequest]: HttpRequestNode,
 		[NodeType.Generation]: GenerationNode,
-		[NodeType.Transition]: TransitionNode
+		[NodeType.Transition]: TransitionNode,
+		[NodeType.CatFacts]: CatFactsNode
 	};
 
 	function toFlowNode(config: NodeConfigDto): Node {

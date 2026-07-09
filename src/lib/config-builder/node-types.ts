@@ -9,7 +9,8 @@ export const NodeType = {
 	Classification: 'ClassificationNode',
 	HttpRequest: 'HttpRequestNode',
 	Generation: 'GenerationNode',
-	Transition: 'TransitionNode'
+	Transition: 'TransitionNode',
+	CatFacts: 'CatFactsNode'
 } as const;
 
 export type NodeTypeId = (typeof NodeType)[keyof typeof NodeType];
@@ -34,4 +35,9 @@ export const defaultPaletteNodes: PaletteItem[] = [
 	{ nodeType: NodeType.Generation, label: 'Generation Node' },
 	{ nodeType: NodeType.Transition, label: 'Transition Node' },
 	{ nodeType: NodeType.Completion, label: 'Completion Node' }
+];
+
+/** Example nodes shown in their own collapsible palette section. */
+export const examplePaletteNodes: PaletteItem[] = [
+	{ nodeType: NodeType.CatFacts, label: 'Cat Facts Node' }
 ];

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { defaultPaletteNodes } from '$lib/config-builder/node-types';
+	import { defaultPaletteNodes, examplePaletteNodes } from '$lib/config-builder/node-types';
 	import { schema } from '$lib/stores/agent-schema-store.svelte';
 
 	let { showAgentOptions = true }: { showAgentOptions?: boolean } = $props();
@@ -7,9 +7,16 @@
 	let collapsed = $state(false);
 	let filter = $state('');
 	let groupOpen = $state(true);
+	let examplesOpen = $state(true);
 
 	const filtered = $derived(
 		defaultPaletteNodes.filter((item) =>
+			item.label.toLowerCase().includes(filter.trim().toLowerCase())
+		)
+	);
+
+	const filteredExamples = $derived(
+		examplePaletteNodes.filter((item) =>
 			item.label.toLowerCase().includes(filter.trim().toLowerCase())
 		)
 	);
@@ -39,6 +46,19 @@
 	{#if groupOpen}
 		<ul class="palette">
 			{#each filtered as item (item.nodeType)}
+				<li draggable="true" ondragstart={(e) => dragStart(e, item.nodeType)}>
+					{item.label}
+				</li>
+			{/each}
+		</ul>
+	{/if}
+	<button type="button" class="group-header" onclick={() => (examplesOpen = !examplesOpen)}>
+		<span class="chevron" class:open={examplesOpen}>▸</span>
+		Examples
+	</button>
+	{#if examplesOpen}
+		<ul class="palette">
+			{#each filteredExamples as item (item.nodeType)}
 				<li draggable="true" ondragstart={(e) => dragStart(e, item.nodeType)}>
 					{item.label}
 				</li>

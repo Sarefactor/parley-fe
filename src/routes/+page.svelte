@@ -41,7 +41,8 @@
 			items = result.results;
 			totalResults = result.totalResults;
 			pageSize = result.pageSize;
-			page = result.page;
+			// The API's page is 1-based; local page is 0-based (skip = page * pageSize).
+			page = Math.max(0, result.page - 1);
 		} catch (e) {
 			error = e instanceof Error ? e.message : `Failed to load ${heading.toLowerCase()}.`;
 		} finally {
@@ -63,6 +64,11 @@
 	function goToPage(target: number): void {
 		if (target < 0 || target >= totalPages || target === page) return;
 		page = target;
+		void load();
+	}
+
+	function changePageSize(): void {
+		page = 0;
 		void load();
 	}
 
@@ -149,7 +155,17 @@
 				Showing {rangeStart}–{rangeEnd} of {totalResults} results
 			</span>
 
-			<nav class="pager" aria-label="Search result pages">
+			<div class="pager-group">
+				<label class="page-size">
+					<span>Per page</span>
+					<select bind:value={pageSize} onchange={changePageSize} aria-label="Results per page">
+						{#each config.search.pageSizeOptions as size (size)}
+							<option value={size}>{size}</option>
+						{/each}
+					</select>
+				</label>
+
+				<nav class="pager" aria-label="Search result pages">
 				<button onclick={() => goToPage(0)} disabled={page === 0} aria-label="First page">
 					«
 				</button>
@@ -174,14 +190,15 @@
 				>
 					›
 				</button>
-				<button
-					onclick={() => goToPage(totalPages - 1)}
-					disabled={page >= totalPages - 1}
-					aria-label="Last page"
-				>
-					»
-				</button>
-			</nav>
+					<button
+						onclick={() => goToPage(totalPages - 1)}
+						disabled={page >= totalPages - 1}
+						aria-label="Last page"
+					>
+						»
+					</button>
+				</nav>
+			</div>
 		</div>
 	{/if}
 </section>
@@ -304,6 +321,35 @@
 	.count {
 		color: var(--text-dim);
 		font-size: 0.85rem;
+	}
+
+	.pager-group {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.page-size {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--text-dim);
+		font-size: 0.85rem;
+	}
+
+	.page-size select {
+		background: var(--bg);
+		border: 1px solid var(--border-subtle);
+		color: var(--text);
+		border-radius: 6px;
+		padding: 0.35rem 0.5rem;
+		font: inherit;
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
+
+	.page-size select:focus {
+		outline: 1px solid var(--accent-soft);
 	}
 
 	.pager {

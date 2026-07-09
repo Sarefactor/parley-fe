@@ -1,6 +1,7 @@
 import { newUuid } from '$lib/config-builder/ids';
 import { NodeType, type NodeTypeId } from '$lib/config-builder/node-types';
 import type { AgentSchemaDto } from '$parleyts/agent-schema-dto';
+import type { CatFactsNodeOptions } from '$parleyts/cat-facts-node-options';
 import type { ChoiceNodeOptions } from '$parleyts/choice-node-options';
 import type { ClassificationNodeOptions } from '$parleyts/classification-node-options';
 import { ChoiceValidationType } from '$parleyts/choice-validation-type';
@@ -22,6 +23,7 @@ import type { WorkflowSchemaDto } from '$parleyts/workflow-schema-dto';
 import type { WorkflowVariableDto } from '$parleyts/workflow-variable-dto';
 
 // Re-export the generated node option types for components.
+export type { CatFactsNodeOptions } from '$parleyts/cat-facts-node-options';
 export type { ChoiceNodeOptions } from '$parleyts/choice-node-options';
 export type { ClassificationNodeOptions } from '$parleyts/classification-node-options';
 export type { ConfirmationNodeOptions } from '$parleyts/confirmation-node-options';
@@ -113,6 +115,11 @@ function newNodeConfig(nodeType: NodeTypeId, position: { x: number; y: number })
 			config.nodeOptions = { message: '', targetKey: '' } satisfies GenerationNodeOptions;
 			config.nodeVariables = [emptyVariable()];
 			break;
+		case NodeType.CatFacts:
+			// Cat Facts nodes always set a single string variable.
+			config.nodeOptions = { maxLength: 20, targetKey: '' } satisfies CatFactsNodeOptions;
+			config.nodeVariables = [emptyVariable()];
+			break;
 		case NodeType.Classification:
 			config.nodeOptions = { targetKey: '' } satisfies ClassificationNodeOptions;
 			break;
@@ -162,6 +169,9 @@ function normalizeNode(node: NodeConfigDto): NodeConfigDto {
 		}
 	} else if (node.nodeType === NodeType.Generation) {
 		node.nodeOptions = { message: '', targetKey: '', ...node.nodeOptions };
+		if (node.nodeVariables.length === 0) node.nodeVariables.push(emptyVariable());
+	} else if (node.nodeType === NodeType.CatFacts) {
+		node.nodeOptions = { maxLength: 20, targetKey: '', ...node.nodeOptions };
 		if (node.nodeVariables.length === 0) node.nodeVariables.push(emptyVariable());
 	} else if (node.nodeType === NodeType.Classification) {
 		node.nodeOptions = { targetKey: '', ...node.nodeOptions };
