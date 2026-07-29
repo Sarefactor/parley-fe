@@ -9,6 +9,7 @@ export const NodeType = {
 	Classification: 'ClassificationNode',
 	HttpRequest: 'HttpRequestNode',
 	Generation: 'GenerationNode',
+	Iterator: 'IteratorNode',
 	Transition: 'TransitionNode',
 	CatFacts: 'CatFactsNode'
 } as const;
@@ -33,6 +34,7 @@ export const defaultPaletteNodes: PaletteItem[] = [
 	{ nodeType: NodeType.Classification, label: 'Classification Node' },
 	{ nodeType: NodeType.HttpRequest, label: 'Http Request Node' },
 	{ nodeType: NodeType.Generation, label: 'Generation Node' },
+	{ nodeType: NodeType.Iterator, label: 'Iterator Node' },
 	{ nodeType: NodeType.Transition, label: 'Transition Node' },
 	{ nodeType: NodeType.Completion, label: 'Completion Node' }
 ];

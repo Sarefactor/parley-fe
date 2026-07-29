@@ -44,17 +44,16 @@
 
 	const suggestions: Suggestion[] = $derived.by(() => {
 		if (!open) return [];
-		// Lists can never be used inside a message.
-		const usable = variables.filter((v) => !v.isList && v.name);
+		const usable = variables.filter((v) => v.name);
 		const colon = query.indexOf(':');
 		if (colon >= 0) {
-			// [object:property...] — suggest the object's (non-list) properties.
+			// [object:property...] — suggest the object's properties.
 			const varName = query.slice(0, colon);
 			const propQuery = query.slice(colon + 1).toLowerCase();
 			const parent = usable.find((v) => v.name === varName && v.type === VariableDataType.Object);
 			if (!parent) return [];
 			return parent.objectVariables
-				.filter((p) => !p.isList && p.name && p.name.toLowerCase().includes(propQuery))
+				.filter((p) => p.name && p.name.toLowerCase().includes(propQuery))
 				.map((p) => ({ insert: `${varName}:${p.name}`, label: p.name, drill: false }));
 		}
 		const q = query.toLowerCase();

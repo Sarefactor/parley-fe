@@ -51,7 +51,7 @@ src/
       AgentOptionsModal.svelte / WorkflowOptionsModal.svelte / NodeOptionsModal.svelte /
       TransitionOptionsModal.svelte
       VariablesEditor.svelte     Full workflow-variable editor (dropdown + Add New pattern).
-      VariablePicker.svelte      Filterable variable dropdown. mode: 'all'|'strings'|'non-object'.
+      VariablePicker.svelte      Filterable variable dropdown. mode: 'all'|'strings'|'non-object'|'lists'.
       MessageField.svelte        Textarea with "[" variable autocomplete (see §6).
       RuleFields.svelte          Comparison-type + match inputs for validation/transition rules.
       nodes/                     One canvas component per node type + BaseNode.svelte.
@@ -161,11 +161,15 @@ Key methods:
 ## 6. Shared editor widgets
 
 - **`MessageField`** — any "message/prompt" textarea. Typing `[` opens a filtered dropdown of
-  `getAllVariables()` (lists excluded); selecting inserts `[name]`; picking an Object variable
-  inserts `name:` and drills into its (non-list) properties → `[object:property]`.
+  `getAllVariables()` (lists included); selecting inserts `[name]`; picking an Object variable
+  inserts `name:` and drills into its properties → `[object:property]`. `isList` is no
+  restriction anywhere: list variables, properties of list objects, and list properties of
+  (list or non-list) objects are all selectable.
 - **`VariablePicker`** — text input + filtered dropdown, `mode`:
   `'all'` (default), `'strings'` (string vars + string props of objects), `'non-object'`
-  (non-object vars of any type + object properties). Bind with `bind:value`.
+  (non-object vars of any type + object properties), `'lists'` (list vars of any type incl.
+  objects + list props of objects, used by the Iterator node). Only `'lists'` cares about
+  `isList` — the other modes offer list and non-list variables alike. Bind with `bind:value`.
 - **`VariablesEditor`** — the full add/edit UI for `WorkflowVariableDto[]` (used by workflow modal,
   Classification "Classification Variables", HttpRequest "Request Response Variables"). Pass with
   `bind:variables`.

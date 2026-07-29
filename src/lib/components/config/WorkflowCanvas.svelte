@@ -21,6 +21,7 @@
 	import GenerationNode from './nodes/GenerationNode.svelte';
 	import HttpRequestNode from './nodes/HttpRequestNode.svelte';
 	import InputNode from './nodes/InputNode.svelte';
+	import IteratorNode from './nodes/IteratorNode.svelte';
 	import MessageNode from './nodes/MessageNode.svelte';
 	import TransitionNode from './nodes/TransitionNode.svelte';
 
@@ -34,6 +35,7 @@
 		[NodeType.Classification]: ClassificationNode,
 		[NodeType.HttpRequest]: HttpRequestNode,
 		[NodeType.Generation]: GenerationNode,
+		[NodeType.Iterator]: IteratorNode,
 		[NodeType.Transition]: TransitionNode,
 		[NodeType.CatFacts]: CatFactsNode
 	};

@@ -6,11 +6,14 @@
 	 * Which variables are offered:
 	 * - 'all': every named variable.
 	 * - 'strings': string variables plus string properties of object variables
-	 *   (`objectVariable:stringProperty`), lists excluded.
+	 *   (`objectVariable:stringProperty`).
 	 * - 'non-object': non-object variables of any type plus properties of object
-	 *   variables (`objectVariable:property`), lists excluded.
+	 *   variables (`objectVariable:property`).
+	 * - 'lists': list variables of any type (including objects), plus list
+	 *   properties of object variables (`objectVariable:listProperty`) — offered
+	 *   whether or not the object itself is a list.
 	 */
-	type PickerMode = 'all' | 'strings' | 'non-object';
+	type PickerMode = 'all' | 'strings' | 'non-object' | 'lists';
 
 	let {
 		value = $bindable(''),
@@ -25,6 +28,37 @@
 	} = $props();
 
 	let open = $state(false);
+	let inputEl = $state<HTMLInputElement>();
+
+	// The dropdown is position: fixed so it can escape the modal's scroll
+	// container instead of stretching it; anchor it to the input manually.
+	let dropdownTop = $state(0);
+	let dropdownLeft = $state(0);
+	let dropdownWidth = $state(0);
+
+	function updateDropdownPosition(): void {
+		if (!inputEl) return;
+		const rect = inputEl.getBoundingClientRect();
+		dropdownTop = rect.bottom;
+		dropdownLeft = rect.left;
+		dropdownWidth = rect.width;
+	}
+
+	function openDropdown(): void {
+		updateDropdownPosition();
+		open = true;
+	}
+
+	// Keep the dropdown glued to the input if anything scrolls or resizes.
+	$effect(() => {
+		if (!open) return;
+		window.addEventListener('scroll', updateDropdownPosition, true);
+		window.addEventListener('resize', updateDropdownPosition);
+		return () => {
+			window.removeEventListener('scroll', updateDropdownPosition, true);
+			window.removeEventListener('resize', updateDropdownPosition);
+		};
+	});
 
 	const candidates = $derived.by(() => {
 		const names: string[] = [];
@@ -34,10 +68,19 @@
 				names.push(variable.name);
 				continue;
 			}
-			if (variable.isList) continue;
+			if (mode === 'lists') {
+				if (variable.isList) names.push(variable.name);
+				if (variable.type === VariableDataType.Object) {
+					for (const property of variable.objectVariables ?? []) {
+						if (!property.name || !property.isList) continue;
+						names.push(`${variable.name}:${property.name}`);
+					}
+				}
+				continue;
+			}
 			if (variable.type === VariableDataType.Object) {
 				for (const property of variable.objectVariables ?? []) {
-					if (!property.name || property.isList) continue;
+					if (!property.name) continue;
 					if (mode === 'strings' && property.type !== VariableDataType.String) continue;
 					names.push(`${variable.name}:${property.name}`);
 				}
@@ -57,13 +100,19 @@
 <div class="picker">
 	<input
 		bind:value
+		bind:this={inputEl}
 		{placeholder}
-		onfocus={() => (open = true)}
-		oninput={() => (open = true)}
+		onfocus={openDropdown}
+		oninput={openDropdown}
 		onblur={() => setTimeout(() => (open = false), 150)}
 	/>
 	{#if open && filtered.length > 0}
-		<ul role="listbox">
+		<ul
+			role="listbox"
+			style:top="{dropdownTop}px"
+			style:left="{dropdownLeft}px"
+			style:width="{dropdownWidth}px"
+		>
 			{#each filtered as name (name)}
 				<li role="option" aria-selected={name === value}>
 					<button
@@ -103,15 +152,13 @@
 	}
 
 	ul {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		z-index: 20;
+		position: fixed;
+		z-index: 60;
 		margin: 0.15rem 0 0;
 		padding: 0.25rem;
 		list-style: none;
-		max-height: 160px;
+		/* Scroll after 5 items: 5 × 30px rows + ul padding + borders. */
+		max-height: calc(5 * 30px + 0.5rem + 2px);
 		overflow-y: auto;
 		background: var(--bg-titlebar);
 		border: 1px solid var(--accent-soft);
@@ -119,7 +166,9 @@
 	}
 
 	ul button {
-		display: block;
+		display: flex;
+		align-items: center;
+		height: 30px;
 		width: 100%;
 		text-align: left;
 		background: transparent;

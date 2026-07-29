@@ -10,6 +10,7 @@ import type { GenerationNodeOptions } from '$parleyts/generation-node-options';
 import { HttpMethodType } from '$parleyts/http-method-type';
 import type { HttpRequestNodeOptions } from '$parleyts/http-request-node-options';
 import type { InputNodeOptions } from '$parleyts/input-node-options';
+import type { IteratorNodeOptions } from '$parleyts/iterator-node-options';
 import type { MessageNodeOptions } from '$parleyts/message-node-options';
 import type { NodeConfigDto } from '$parleyts/node-config-dto';
 import type { ParleyNodeValidationErrorDetailDto } from '$parleyts/parley-node-validation-error-detail-dto';
@@ -30,6 +31,7 @@ export type { ConfirmationNodeOptions } from '$parleyts/confirmation-node-option
 export type { GenerationNodeOptions } from '$parleyts/generation-node-options';
 export type { HttpRequestNodeOptions } from '$parleyts/http-request-node-options';
 export type { InputNodeOptions } from '$parleyts/input-node-options';
+export type { IteratorNodeOptions } from '$parleyts/iterator-node-options';
 export type { MessageNodeOptions } from '$parleyts/message-node-options';
 
 /**
@@ -123,6 +125,9 @@ function newNodeConfig(nodeType: NodeTypeId, position: { x: number; y: number })
 		case NodeType.Classification:
 			config.nodeOptions = { targetKey: '' } satisfies ClassificationNodeOptions;
 			break;
+		case NodeType.Iterator:
+			config.nodeOptions = { targetKey: '' } satisfies IteratorNodeOptions;
+			break;
 		case NodeType.HttpRequest:
 			config.nodeOptions = {
 				url: '',
@@ -174,6 +179,8 @@ function normalizeNode(node: NodeConfigDto): NodeConfigDto {
 		node.nodeOptions = { maxLength: 20, targetKey: '', ...node.nodeOptions };
 		if (node.nodeVariables.length === 0) node.nodeVariables.push(emptyVariable());
 	} else if (node.nodeType === NodeType.Classification) {
+		node.nodeOptions = { targetKey: '', ...node.nodeOptions };
+	} else if (node.nodeType === NodeType.Iterator) {
 		node.nodeOptions = { targetKey: '', ...node.nodeOptions };
 	} else if (node.nodeType === NodeType.HttpRequest) {
 		node.nodeOptions = {

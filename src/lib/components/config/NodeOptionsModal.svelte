@@ -19,6 +19,7 @@
 		type GenerationNodeOptions,
 		type HttpRequestNodeOptions,
 		type InputNodeOptions,
+		type IteratorNodeOptions,
 		type MessageNodeOptions
 	} from '$lib/stores/agent-schema-store.svelte';
 	import { VariableDataType } from '$parleyts/variable-data-type';
@@ -157,6 +158,8 @@
 				return 'Http Request Node';
 			case NodeType.Generation:
 				return 'Generation Node';
+			case NodeType.Iterator:
+				return 'Iterator Node';
 			case NodeType.Transition:
 				return 'Transition Node';
 			case NodeType.CatFacts:
@@ -522,6 +525,12 @@
 					<input bind:value={config.nodeVariables[0].description} />
 				</label>
 			{/if}
+		{:else if config.nodeType === NodeType.Iterator}
+			{@const options = config.nodeOptions as IteratorNodeOptions}
+			<div class="field">
+				<span>Target Key</span>
+				<VariablePicker bind:value={options.targetKey} variables={allVariables} mode="lists" />
+			</div>
 		{:else if config.nodeType === NodeType.Transition}
 			<p class="muted">
 				This node has no options. Connect its lower output connector to other nodes, then click a
